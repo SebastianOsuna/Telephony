@@ -33,6 +33,8 @@ import io.flutter.view.FlutterCallbackInformation
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.collections.HashMap
+import android.content.ContentUris
+import android.content.ContentValues
 
 
 class IncomingSmsReceiver : BroadcastReceiver() {
@@ -42,10 +44,12 @@ class IncomingSmsReceiver : BroadcastReceiver() {
   }
 
   override fun onReceive(context: Context, intent: Intent?) {
-    val smsList = Telephony.Sms.Intents.getMessagesFromIntent(intent)
-    val messagesGroupedByOriginatingAddress = smsList.groupBy { it.originatingAddress }
-    messagesGroupedByOriginatingAddress.forEach { group ->
-      processIncomingSms(context, group.value)
+    if (intent?.action == "android.provider.Telephony.SMS_RECEIVED") {
+      val smsList = Telephony.Sms.Intents.getMessagesFromIntent(intent)
+      val messagesGroupedByOriginatingAddress = smsList.groupBy { it.originatingAddress }
+      messagesGroupedByOriginatingAddress.forEach { group ->
+        processIncomingSms(context, group.value)
+      }
     }
   }
 
@@ -67,6 +71,13 @@ class IncomingSmsReceiver : BroadcastReceiver() {
             .plus(smsMessage.messageBody.trim())
       }
     }
+
+    val id = commitSMS(context, messageMap)
+    if (id != null) {
+      messageMap[Constants.ID] = id.toString()
+    }
+
+
     if (IncomingSmsHandler.isApplicationForeground(context)) {
       val args = HashMap<String, Any>()
       args[MESSAGE] = messageMap
@@ -78,6 +89,21 @@ class IncomingSmsReceiver : BroadcastReceiver() {
         processInBackground(context, messageMap)
       }
     }
+  }
+
+  private fun commitSMS(context: Context, sms: Map<String, Any?>): Long? {
+    val values = ContentValues()
+    values.put("address", sms[ORIGINATING_ADDRESS] as String)
+    values.put("body", sms[MESSAGE_BODY] as String)
+    values.put("read", 0);
+    val resolver = context.contentResolver
+    val response = resolver?.insert(Telephony.Sms.Inbox.CONTENT_URI, values)
+
+    if (response != null) {
+       return ContentUris.parseId(response)
+    }
+
+    return null;
   }
 
   private fun processInBackground(context: Context, sms: HashMap<String, Any?>) {
