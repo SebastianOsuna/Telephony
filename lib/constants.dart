@@ -144,7 +144,8 @@ const INCOMING_SMS_COLUMNS = [
   SmsColumn._(_SmsProjections.ORIGINATING_ADDRESS),
   SmsColumn._(_SmsProjections.MESSAGE_BODY),
   SmsColumn._(_SmsProjections.TIMESTAMP),
-  SmsColumn.STATUS
+  SmsColumn.STATUS,
+  SmsColumn.ID
 ];
 
 const DEFAULT_CONVERSATION_COLUMNS = [

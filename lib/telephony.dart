@@ -6,7 +6,6 @@ import 'package:flutter/widgets.dart';
 import 'package:platform/platform.dart';
 
 part 'constants.dart';
-
 part 'filter.dart';
 
 typedef MessageHandler(SmsMessage message);
@@ -633,7 +632,8 @@ class SmsMessage {
           break;
         case _SmsProjections.TYPE:
           var smsTypeIndex = int.tryParse(value);
-          this.type = smsTypeIndex != null ? SmsType.values[smsTypeIndex] : null;
+          this.type =
+              smsTypeIndex != null ? SmsType.values[smsTypeIndex] : null;
           break;
       }
     }
